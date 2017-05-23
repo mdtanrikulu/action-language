@@ -100,7 +100,6 @@ class MainFragment extends React.Component {
                                 let checkedObservation = checkObservationInDD(dd, al[i - 1])[0]
                                 if (checkedObservation.includes(item.trim().charAt(0))) {
                                     console.log("***", checkedObservation)
-                                    //TODO  checkedObservation should pushed into the val array
                                     let fetchLetter = checkedObservation.replace('¬', '').charAt(0)
                                     val.push({
                                         value: fetchLetter === 'l' ? 'loaded' : (fetchLetter === 'a' ? 'alive' : 'hidden'),
@@ -200,11 +199,29 @@ class MainFragment extends React.Component {
             } else if (domain.includes(dict.IF)) {
                 //TODO
             } else if (domain.includes(dict.AFTER)) {
-                //TODO
-            } else {
+                console.log(dict.AFTER, "condition")
+                let parsedDomain = domain.split(dict.INVOKES)
+                let cause = parsedDomain[0].trim()
+                let consequenceWithCondition = parsedDomain[1].split(dict.AFTER)
+                let consequence = consequenceWithCondition[0]
+                let step = parseInt(consequenceWithCondition[1])
+                console.log('action_list', action_list)
+                function getIndexes(arr, val) {
+                    var indexes = [],
+                        i = -1;
+                    while ((i = arr.indexOf(val, i + 1)) != -1) {
+                        indexes.push(i);
+                    }
+                    return indexes;
+                }
+                let filteredActionList = getIndexes(action_list, cause)
+                console.log('filteredActionList', filteredActionList)
+                filteredActionList.forEach(item => action_list[item + step + 1] = consequence.trim())
 
-                let cause = domain.split(dict.INVOKES)[0].trim()
-                let consequence = domain.split(dict.INVOKES)[1]
+            } else {
+                let parsedDomain = domain.split(dict.INVOKES)
+                let cause = parsedDomain[0].trim()
+                let consequence = parsedDomain[1]
                 console.log('action_list', action_list)
                 function getIndexes(arr, val) {
                     var indexes = [],
