@@ -18,7 +18,7 @@ class TimeLine extends React.Component {
             </div>
             <div className="line__timeline"/>
             <div className="label-container__timeline">
-            {item.val.map(({value, sign}, index) => <span key={index.toString()}> {sign ? '' : '¬'}{value}</span>)}
+            {item.val.map(({value, sign}, index) => <span key={index.toString()}> {sign ? '' : '¬'}{value.charAt(0)}</span>)}
             </div>
         </div>)
     }

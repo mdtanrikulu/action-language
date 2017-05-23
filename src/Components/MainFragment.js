@@ -104,7 +104,7 @@ class MainFragment extends React.Component {
                                     let fetchLetter = checkedObservation.replace('¬', '').charAt(0)
                                     val.push({
                                         value: fetchLetter === 'l' ? 'loaded' : (fetchLetter === 'a' ? 'alive' : 'hidden'),
-                                        sign: checkedObservation === '¬' ? 0 : 1
+                                        sign: checkedObservation.includes('¬') ? 0 : 1
                                     })
 
                                 } else {
