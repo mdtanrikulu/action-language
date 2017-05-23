@@ -100,6 +100,12 @@ class MainFragment extends React.Component {
                                 let checkedObservation = checkObservationInDD(dd, al[i - 1])[0]
                                 if (checkedObservation.includes(item.trim().charAt(0))) {
                                     console.log("***", checkedObservation)
+                                    //TODO  checkedObservation should pushed into the val array
+                                    let fetchLetter = checkedObservation.replace('¬', '').charAt(0)
+                                    val.push({
+                                        value: fetchLetter === 'l' ? 'loaded' : (fetchLetter === 'a' ? 'alive' : 'hidden'),
+                                        sign: checkedObservation === '¬' ? 0 : 1
+                                    })
 
                                 } else {
                                     val.push({
@@ -111,10 +117,22 @@ class MainFragment extends React.Component {
                         })
                     }
                 }
-                val.forEach(item => {
-                })
+                if (i > 0) {
+                    console.log("EARLIER TIMELINE_DATA", timelineData[i - 1])
+                    val.forEach(({value, sign}, index) => {
+                        if (value) {
+                            console.log({
+                                value,
+                                sign
+                            })
+                            validValues[index] = {
+                                [value]: sign
+                            }
+                        }
+                    })
+                }
                 console.log("VALUES", val)
-                console.log("VALIDVALUES", val)
+                console.log("VALIDVALUES", validValues)
                 console.info("===========================================================")
 
                 instant = {
