@@ -188,6 +188,7 @@ class MainFragment extends React.Component {
         function checkActionInDD(val) {
             let ddArray = val.split(';')
             let filteredArray = ddArray.filter(domain => domain.includes(dict.INVOKES) || domain.includes(dict.TRIGGERS))
+            console.info("DD ACTION FILTERED", filteredArray)
             filteredArray.forEach(item => {
                 calculateTime(item)
             })
@@ -204,7 +205,19 @@ class MainFragment extends React.Component {
 
                 let cause = domain.split(dict.INVOKES)[0].trim()
                 let consequence = domain.split(dict.INVOKES)[1]
-                action_list[parseInt(action_list.indexOf(cause)) + 1] = consequence.trim()
+                console.log('action_list', action_list)
+                function getIndexes(arr, val) {
+                    var indexes = [],
+                        i = -1;
+                    while ((i = arr.indexOf(val, i + 1)) != -1) {
+                        indexes.push(i);
+                    }
+                    return indexes;
+                }
+                let filteredActionList = getIndexes(action_list, cause)
+                console.log('filteredActionList', filteredActionList)
+                filteredActionList.forEach(item => action_list[item + 1] = consequence.trim())
+
 
             }
         }
