@@ -49,13 +49,16 @@ class MainFragment extends React.Component {
     _handleDraw() {
 
         const {domainDescription, obs, acs} = this.refs
-
+        console.info("===========================================================")
         console.info("DD", domainDescription.value)
         console.info("OBS", obs.value)
         console.info("ACS", acs.value)
+        console.info("===========================================================")
         action_list = parseACS(acs.value)
         observation_list = parseOBS(obs.value)
+        console.log("ACS LIST", action_list)
         console.log("OBS LIST", observation_list)
+        console.info("===========================================================")
 
 
         checkActionInDD(domainDescription.value)
@@ -66,39 +69,53 @@ class MainFragment extends React.Component {
             timelineData = []
             console.log("AL", al)
             console.log("AL LENGTH", al.length)
+            console.info("===========================================================")
             for (let i = 0; i <= al.length; i++) {
                 let instant;
                 let val = []
                 console.log('OL i', ol[i], i)
+                console.info("===========================================================")
                 if (ol[i]) {
                     ol[i].forEach(timeline => {
                         Object.keys(timeline).forEach(item => {
-                            val.push((!timeline[item] ? '¬' : '') + item.trim().charAt(0))
+                            val.push({
+                                value: item.trim(),
+                                sign: timeline[item]
+                            })
                         })
                     })
                 } else {
                     if (typeof al[i - 1] === 'undefined') {
                         validValues.forEach(timeline => {
                             Object.keys(timeline).forEach(item => {
-                                val.push((!timeline[item] ? '¬' : '') + item.trim().charAt(0))
+                                val.push({
+                                    value: item.trim(),
+                                    sign: timeline[item]
+                                })
                             })
                         })
                     } else {
                         validValues.forEach(timeline => {
                             Object.keys(timeline).forEach(item => {
-                                if (checkObservationInDD(dd, al[i - 1])[0].includes(item.trim().charAt(0))) {
-                                    console.log("***", checkObservationInDD(dd, al[i - 1]))
-                                    val.push(checkObservationInDD(dd, al[i - 1])[0])
+                                let checkedObservation = checkObservationInDD(dd, al[i - 1])[0]
+                                if (checkedObservation.includes(item.trim().charAt(0))) {
+                                    console.log("***", checkedObservation)
+
                                 } else {
-                                    val.push((!timeline[item] ? '¬' : '') + item.trim().charAt(0))
+                                    val.push({
+                                        value: item.trim(),
+                                        sign: timeline[item]
+                                    })
                                 }
                             })
                         })
                     }
                 }
-
+                val.forEach(item => {
+                })
                 console.log("VALUES", val)
-
+                console.log("VALIDVALUES", val)
+                console.info("===========================================================")
 
                 instant = {
                     id: i,
@@ -170,7 +187,6 @@ class MainFragment extends React.Component {
                 let cause = domain.split(dict.INVOKES)[0].trim()
                 let consequence = domain.split(dict.INVOKES)[1]
                 action_list[parseInt(action_list.indexOf(cause)) + 1] = consequence.trim()
-                console.log(action_list)
 
             }
         }
