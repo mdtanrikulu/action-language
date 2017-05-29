@@ -9,7 +9,7 @@ import Timeline from './Timeline.js'
 
 let logicalSymbols = Object.freeze([
     ['\\\(not\\\)', '¬'],
-    ['\\\(pi\\\)', 'π'],
+    //['\\\(pi\\\)', 'π'],
     ['\\\(and\\\)', '⋀'],
     ['\\\(or\\\)', '⋁'],
 ])
@@ -61,9 +61,13 @@ class MainFragment extends React.Component {
         console.info("===========================================================")
 
 
-        checkActionInDD(domainDescription.value)
+
 
         let td = createLine(action_list, observation_list, domainDescription.value)
+
+        checkActionInDD(domainDescription.value)
+
+        td = createLine(action_list, observation_list, domainDescription.value)
 
         function createLine(al, ol, dd) {
             timelineData = []
@@ -188,20 +192,35 @@ class MainFragment extends React.Component {
             let ddArray = val.split(';')
             let filteredArray = ddArray.filter(domain => domain.includes(dict.INVOKES) || domain.includes(dict.TRIGGERS))
             console.info("DD ACTION FILTERED", filteredArray)
-            filteredArray.forEach(item => {
-                calculateTime(item)
+            filteredArray.forEach((item) => {
+                calculateTime(item, ddArray.indexOf(item))
             })
         }
 
-        function calculateTime(domain) {
+        function calculateTime(domain, index) {
+            let parsedDomain = domain.split(dict.INVOKES)
+            let cause = parsedDomain[0].trim()
             if (domain.includes(dict.IF) && domain.includes(dict.AFTER)) {
                 //TODO
             } else if (domain.includes(dict.IF)) {
-                //TODO
+                let consequenceWithCondition = parsedDomain[1].split(dict.IF)
+                let consequence = consequenceWithCondition[0]
+                let condition = consequenceWithCondition[1]
+                if (condition.includes('∧')) {
+                    //TODO
+                    console.log('action has and conditions', condition)
+                } else if (condition.includes('⋁')) {
+                    //TODO
+                    console.log('action has or condition', condition)
+                } else {
+                    //TODO
+                    let filteredObserveration = timelineData[index].val.filter(item => (item.value === condition.trim()) && item)
+                    if (filteredObserveration.length > 0)
+                        action_list[index] = consequence.trim()
+                    console.log('action_list with condition', action_list, consequence.trim(), index, filteredObserveration)
+
+                }
             } else if (domain.includes(dict.AFTER)) {
-                console.log(dict.AFTER, "condition")
-                let parsedDomain = domain.split(dict.INVOKES)
-                let cause = parsedDomain[0].trim()
                 let consequenceWithCondition = parsedDomain[1].split(dict.AFTER)
                 let consequence = consequenceWithCondition[0]
                 let step = parseInt(consequenceWithCondition[1])
@@ -219,8 +238,6 @@ class MainFragment extends React.Component {
                 filteredActionList.forEach(item => action_list[item + step + 1] = consequence.trim())
 
             } else {
-                let parsedDomain = domain.split(dict.INVOKES)
-                let cause = parsedDomain[0].trim()
                 let consequence = parsedDomain[1]
                 console.log('action_list', action_list)
                 function getIndexes(arr, val) {
@@ -316,6 +333,7 @@ class MainFragment extends React.Component {
         this.props.actions.setTimeline(td)
     }
 
+    // <span>π (pi)</span>
     render() {
         const {actions, status, search, signIn} = this.props;
         return (
@@ -323,7 +341,6 @@ class MainFragment extends React.Component {
               <div className="main-fragment-content">
               <div className="tooltip-section__main">
                   <span>¬ (not)</span>
-                  <span>π (pi)</span>
                   <span>⋀ (and) </span>
                   <span>⋁ (or)</span>
               </div>
@@ -333,7 +350,7 @@ class MainFragment extends React.Component {
                     <textarea ref="domainDescription" className="domain-description-input__main" onChange={::this._handleInput} defaultValue="LOAD causes loaded;
 SHOOT causes ¬loaded;
 SHOOT causes ¬alive if loaded ∧ ¬hidden;
-LOAD invokes ESCAPE;
+LOAD invokes ESCAPE if loaded;
 ESCAPE releases hidden." rows={8}/>
                 </div>
                 <div>
