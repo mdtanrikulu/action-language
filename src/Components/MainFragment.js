@@ -9,7 +9,7 @@ import Timeline from './Timeline.js'
 
 let logicalSymbols = Object.freeze([
     ['\\\(not\\\)', '¬'],
-    ['\\\(pi\\\)', 'π'],
+    //['\\\(pi\\\)', 'π'],
     ['\\\(and\\\)', '⋀'],
     ['\\\(or\\\)', '⋁'],
 ])
@@ -49,56 +49,94 @@ class MainFragment extends React.Component {
     _handleDraw() {
 
         const {domainDescription, obs, acs} = this.refs
-
+        console.info("===========================================================")
         console.info("DD", domainDescription.value)
         console.info("OBS", obs.value)
         console.info("ACS", acs.value)
+        console.info("===========================================================")
         action_list = parseACS(acs.value)
         observation_list = parseOBS(obs.value)
+        console.log("ACS LIST", action_list)
         console.log("OBS LIST", observation_list)
+        console.info("===========================================================")
 
+
+
+
+        let td = createLine(action_list, observation_list, domainDescription.value)
 
         checkActionInDD(domainDescription.value)
 
-        let td = createLine(action_list, observation_list, domainDescription.value)
+        td = createLine(action_list, observation_list, domainDescription.value)
 
         function createLine(al, ol, dd) {
             timelineData = []
             console.log("AL", al)
             console.log("AL LENGTH", al.length)
+            console.info("===========================================================")
             for (let i = 0; i <= al.length; i++) {
                 let instant;
                 let val = []
                 console.log('OL i', ol[i], i)
+                console.info("===========================================================")
                 if (ol[i]) {
                     ol[i].forEach(timeline => {
                         Object.keys(timeline).forEach(item => {
-                            val.push((!timeline[item] ? '¬' : '') + item.trim().charAt(0))
+                            val.push({
+                                value: item.trim(),
+                                sign: timeline[item]
+                            })
                         })
                     })
                 } else {
                     if (typeof al[i - 1] === 'undefined') {
                         validValues.forEach(timeline => {
                             Object.keys(timeline).forEach(item => {
-                                val.push((!timeline[item] ? '¬' : '') + item.trim().charAt(0))
+                                val.push({
+                                    value: item.trim(),
+                                    sign: timeline[item]
+                                })
                             })
                         })
                     } else {
                         validValues.forEach(timeline => {
                             Object.keys(timeline).forEach(item => {
-                                if (checkObservationInDD(dd, al[i - 1])[0].includes(item.trim().charAt(0))) {
-                                    console.log("***", checkObservationInDD(dd, al[i - 1]))
-                                    val.push(checkObservationInDD(dd, al[i - 1])[0])
+                                let checkedObservation = checkObservationInDD(dd, al[i - 1])[0]
+                                if (checkedObservation.includes(item.trim().charAt(0))) {
+                                    console.log("***", checkedObservation)
+                                    let fetchLetter = checkedObservation.replace('¬', '').charAt(0)
+                                    val.push({
+                                        value: fetchLetter === 'l' ? 'loaded' : (fetchLetter === 'a' ? 'alive' : 'hidden'),
+                                        sign: checkedObservation.includes('¬') ? 0 : 1
+                                    })
+
                                 } else {
-                                    val.push((!timeline[item] ? '¬' : '') + item.trim().charAt(0))
+                                    val.push({
+                                        value: item.trim(),
+                                        sign: timeline[item]
+                                    })
                                 }
                             })
                         })
                     }
                 }
-
+                if (i > 0) {
+                    console.log("EARLIER TIMELINE_DATA", timelineData[i - 1])
+                    val.forEach(({value, sign}, index) => {
+                        if (value) {
+                            console.log({
+                                value,
+                                sign
+                            })
+                            validValues[index] = {
+                                [value]: sign
+                            }
+                        }
+                    })
+                }
                 console.log("VALUES", val)
-
+                console.log("VALIDVALUES", validValues)
+                console.info("===========================================================")
 
                 instant = {
                     id: i,
@@ -153,24 +191,67 @@ class MainFragment extends React.Component {
         function checkActionInDD(val) {
             let ddArray = val.split(';')
             let filteredArray = ddArray.filter(domain => domain.includes(dict.INVOKES) || domain.includes(dict.TRIGGERS))
-            filteredArray.forEach(item => {
-                calculateTime(item)
+            console.info("DD ACTION FILTERED", filteredArray)
+            filteredArray.forEach((item) => {
+                calculateTime(item, ddArray.indexOf(item))
             })
         }
 
-        function calculateTime(domain) {
+        function calculateTime(domain, index) {
+            let parsedDomain = domain.split(dict.INVOKES)
+            let cause = parsedDomain[0].trim()
             if (domain.includes(dict.IF) && domain.includes(dict.AFTER)) {
                 //TODO
             } else if (domain.includes(dict.IF)) {
-                //TODO
-            } else if (domain.includes(dict.AFTER)) {
-                //TODO
-            } else {
+                let consequenceWithCondition = parsedDomain[1].split(dict.IF)
+                let consequence = consequenceWithCondition[0]
+                let condition = consequenceWithCondition[1]
+                if (condition.includes('∧')) {
+                    //TODO
+                    console.log('action has and conditions', condition)
+                } else if (condition.includes('⋁')) {
+                    //TODO
+                    console.log('action has or condition', condition)
+                } else {
+                    //TODO
+                    let filteredObserveration = timelineData[index].val.filter(item => (item.value === condition.trim()) && item)
+                    if (filteredObserveration.length > 0)
+                        action_list[index] = consequence.trim()
+                    console.log('action_list with condition', action_list, consequence.trim(), index, filteredObserveration)
 
-                let cause = domain.split(dict.INVOKES)[0].trim()
-                let consequence = domain.split(dict.INVOKES)[1]
-                action_list[parseInt(action_list.indexOf(cause)) + 1] = consequence.trim()
-                console.log(action_list)
+                }
+            } else if (domain.includes(dict.AFTER)) {
+                let consequenceWithCondition = parsedDomain[1].split(dict.AFTER)
+                let consequence = consequenceWithCondition[0]
+                let step = parseInt(consequenceWithCondition[1])
+                console.log('action_list', action_list)
+                function getIndexes(arr, val) {
+                    var indexes = [],
+                        i = -1;
+                    while ((i = arr.indexOf(val, i + 1)) != -1) {
+                        indexes.push(i);
+                    }
+                    return indexes;
+                }
+                let filteredActionList = getIndexes(action_list, cause)
+                console.log('filteredActionList', filteredActionList)
+                filteredActionList.forEach(item => action_list[item + step + 1] = consequence.trim())
+
+            } else {
+                let consequence = parsedDomain[1]
+                console.log('action_list', action_list)
+                function getIndexes(arr, val) {
+                    var indexes = [],
+                        i = -1;
+                    while ((i = arr.indexOf(val, i + 1)) != -1) {
+                        indexes.push(i);
+                    }
+                    return indexes;
+                }
+                let filteredActionList = getIndexes(action_list, cause)
+                console.log('filteredActionList', filteredActionList)
+                filteredActionList.forEach(item => action_list[item + 1] = consequence.trim())
+
 
             }
         }
@@ -252,6 +333,7 @@ class MainFragment extends React.Component {
         this.props.actions.setTimeline(td)
     }
 
+    // <span>π (pi)</span>
     render() {
         const {actions, status, search, signIn} = this.props;
         return (
@@ -259,7 +341,6 @@ class MainFragment extends React.Component {
               <div className="main-fragment-content">
               <div className="tooltip-section__main">
                   <span>¬ (not)</span>
-                  <span>π (pi)</span>
                   <span>⋀ (and) </span>
                   <span>⋁ (or)</span>
               </div>
@@ -269,7 +350,7 @@ class MainFragment extends React.Component {
                     <textarea ref="domainDescription" className="domain-description-input__main" onChange={::this._handleInput} defaultValue="LOAD causes loaded;
 SHOOT causes ¬loaded;
 SHOOT causes ¬alive if loaded ∧ ¬hidden;
-LOAD invokes ESCAPE;
+LOAD invokes ESCAPE if loaded;
 ESCAPE releases hidden." rows={8}/>
                 </div>
                 <div>
