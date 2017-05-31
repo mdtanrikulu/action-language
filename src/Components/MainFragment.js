@@ -166,11 +166,11 @@ class MainFragment extends React.Component {
 
         function calculatePosibilities(domain) {
             if (domain.includes(dict.IF) && domain.includes(dict.AFTER)) {
-                //TODO
+                //NOTTODO
             } else if (domain.includes(dict.IF)) {
                 //TODO
             } else if (domain.includes(dict.AFTER)) {
-                //TODO
+                //NOTTODO
             } else {
                 let observation;
                 if (domain.includes(dict.CAUSES)) {
@@ -204,20 +204,23 @@ class MainFragment extends React.Component {
                 //TODO
             } else if (domain.includes(dict.IF)) {
                 let consequenceWithCondition = parsedDomain[1].split(dict.IF)
-                let consequence = consequenceWithCondition[0]
-                let condition = consequenceWithCondition[1]
-                if (condition.includes('∧')) {
+                let consequence = consequenceWithCondition[0].trim()
+                let condition = consequenceWithCondition[1].trim()
+                if (condition.includes('∧') || condition.includes('⋁')) {
                     //TODO
-                    console.log('action has and conditions', condition)
-                } else if (condition.includes('⋁')) {
-                    //TODO
-                    console.log('action has or condition', condition)
+                    console.log('action has or/and condition', condition)
                 } else {
                     //TODO
-                    let filteredObserveration = timelineData[index].val.filter(item => (item.value === condition.trim()) && item)
-                    if (filteredObserveration.length > 0)
-                        action_list[index] = consequence.trim()
-                    console.log('action_list with condition', action_list, consequence.trim(), index, filteredObserveration)
+                    let conditionSign = 1;
+                    if (condition.includes('¬')) {
+                        condition = condition.substring(1);
+                        conditionSign = 0
+                    }
+                    let filteredObserveration = timelineData[index - 1].val.filter(item => (item.value === condition) && item)
+                    if (filteredObserveration.length > 0 && filteredObserveration[0].sign == conditionSign) {
+                        action_list[index - 1] = consequence
+                    }
+                    console.log('action_list with one condition', action_list, consequence, index, filteredObserveration)
 
                 }
             } else if (domain.includes(dict.AFTER)) {
@@ -235,7 +238,7 @@ class MainFragment extends React.Component {
                 }
                 let filteredActionList = getIndexes(action_list, cause)
                 console.log('filteredActionList', filteredActionList)
-                filteredActionList.forEach(item => action_list[item + step + 1] = consequence.trim())
+                filteredActionList.forEach(item => action_list[item + step + 1] = consequence)
 
             } else {
                 let consequence = parsedDomain[1]
@@ -250,7 +253,7 @@ class MainFragment extends React.Component {
                 }
                 let filteredActionList = getIndexes(action_list, cause)
                 console.log('filteredActionList', filteredActionList)
-                filteredActionList.forEach(item => action_list[item + 1] = consequence.trim())
+                filteredActionList.forEach(item => action_list[item + 1] = consequence)
 
 
             }
