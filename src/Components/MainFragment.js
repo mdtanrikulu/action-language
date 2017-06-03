@@ -189,7 +189,7 @@ class MainFragment extends React.Component {
 
                 }
                 timelineData.push(instant)
-                if (i > 1)
+                if (i > 0)
                     checkActionInDD(timelineData[i - 1].action, timelineData[i].val, i)
             }
 
