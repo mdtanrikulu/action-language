@@ -39,30 +39,39 @@ class MainFragment extends React.Component {
         let tempArray = []
         let filteredDD = dd.filter(item => item.includes(dict.INVOKES) || item.includes(dict.TRIGGERS))
         filteredDD.map(domain => {
-            let parsedDomain = domain.split(dict.INVOKES)
-            let cause = parsedDomain[0].trim()
-            let rest = parsedDomain[1].trim()
+            let cause = null;
             let consequence = null;
             let condition = null;
             let step = 0;
-            if (rest.includes(dict.IF) && rest.includes(dict.AFTER)) {
-                let parseMore = rest.split(dict.AFTER)
-                consequence = parseMore[0].trim()
-                let parseDeeper = parseMore[1].trim()
-                parseDeeper = parseDeeper.split(dict.IF)
-                step = parseInt(parseDeeper[0].trim())
-                condition = parseDeeper[1].trim()
-            } else if (rest.includes(dict.IF)) {
-                let parseMore = rest.split(dict.IF)
-                consequence = parseMore[0].trim()
-                condition = parseMore[1].trim()
-            } else if (rest.includes(dict.AFTER)) {
-                let parseMore = rest.split(dict.AFTER)
-                consequence = parseMore[0].trim()
-                step = parseInt(parseMore[1].trim())
-            } else {
-                consequence = rest.trim()
+            if (domain.includes(dict.INVOKES)) {
+                let parsedDomain = domain.split(dict.INVOKES)
+                cause = parsedDomain[0].trim()
+                let rest = parsedDomain[1].trim()
+                if (rest.includes(dict.IF) && rest.includes(dict.AFTER)) {
+                    let parseMore = rest.split(dict.AFTER)
+                    consequence = parseMore[0].trim()
+                    let parseDeeper = parseMore[1].trim()
+                    parseDeeper = parseDeeper.split(dict.IF)
+                    step = parseInt(parseDeeper[0].trim())
+                    condition = parseDeeper[1].trim()
+                } else if (rest.includes(dict.IF)) {
+                    let parseMore = rest.split(dict.IF)
+                    consequence = parseMore[0].trim()
+                    condition = parseMore[1].trim()
+                } else if (rest.includes(dict.AFTER)) {
+                    let parseMore = rest.split(dict.AFTER)
+                    consequence = parseMore[0].trim()
+                    step = parseInt(parseMore[1].trim())
+                } else {
+                    consequence = rest.trim()
+                }
+            } else if (domain.includes(dict.TRIGGERS)) {
+                let parsedDomain = domain.split(dict.TRIGGERS)
+                cause = parsedDomain[0].trim()
+                let rest = parsedDomain[1].trim()
+                consequence = rest
             }
+
             tempArray.push({
                 cause,
                 consequence,
