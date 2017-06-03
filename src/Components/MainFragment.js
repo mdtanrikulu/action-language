@@ -35,6 +35,44 @@ class MainFragment extends React.Component {
         super(props);
     }
 
+    parseSemantic(dd) {
+        let tempArray = []
+        let filteredDD = dd.filter(item => item.includes(dict.INVOKES) || item.includes(dict.TRIGGERS))
+        filteredDD.map(domain => {
+            let parsedDomain = domain.split(dict.INVOKES)
+            let cause = parsedDomain[0].trim()
+            let rest = parsedDomain[1].trim()
+            let consequence = null;
+            let condition = null;
+            let step = 0;
+            if (rest.includes(dict.IF) && rest.includes(dict.AFTER)) {
+                let parseMore = rest.split(dict.AFTER)
+                consequence = parseMore[0].trim()
+                let parseDeeper = parseMore[1].trim()
+                parseDeeper = parseDeeper.split(dict.IF)
+                step = parseInt(parseDeeper[0].trim())
+                condition = parseDeeper[1].trim()
+            } else if (rest.includes(dict.IF)) {
+                let parseMore = rest.split(dict.IF)
+                consequence = parseMore[0].trim()
+                condition = parseMore[1].trim()
+            } else if (rest.includes(dict.AFTER)) {
+                let parseMore = rest.split(dict.AFTER)
+                consequence = parseMore[0].trim()
+                step = parseInt(parseMore[1].trim())
+            } else {
+                consequence = rest.trim()
+            }
+            tempArray.push({
+                cause,
+                consequence,
+                step,
+                condition
+            })
+        })
+        return tempArray
+    }
+
     _handleInput(e) {
         console.log(e.target.value)
         let body = e.target.value
@@ -60,14 +98,12 @@ class MainFragment extends React.Component {
         console.log("OBS LIST", observation_list)
         console.info("===========================================================")
 
-
-
+        let ddArray = domainDescription.value.split(';')
+        let parsedSemanticArray = this.parseSemantic(ddArray)
 
         let td = createLine(action_list, observation_list, domainDescription.value)
 
-        checkActionInDD(domainDescription.value)
-
-        td = createLine(action_list, observation_list, domainDescription.value)
+        // checkActionInDD(domainDescription.value)
 
         function createLine(al, ol, dd) {
             timelineData = []
@@ -102,8 +138,7 @@ class MainFragment extends React.Component {
                         validValues.forEach(timeline => {
                             Object.keys(timeline).forEach(item => {
                                 let checkedObservation = checkObservationInDD(dd, al[i - 1])[0]
-                                if (checkedObservation.includes(item.trim().charAt(0))) {
-                                    console.log("***", checkedObservation)
+                                if (checkedObservation && checkedObservation.includes(item.trim().charAt(0))) {
                                     let fetchLetter = checkedObservation.replace('¬', '').charAt(0)
                                     val.push({
                                         value: fetchLetter === 'l' ? 'loaded' : (fetchLetter === 'a' ? 'alive' : 'hidden'),
@@ -145,6 +180,8 @@ class MainFragment extends React.Component {
 
                 }
                 timelineData.push(instant)
+                if (i > 1)
+                    checkActionInDD(timelineData[i - 1].action, timelineData[i].val, i)
             }
 
             return timelineData
@@ -169,6 +206,7 @@ class MainFragment extends React.Component {
                 //NOTTODO
             } else if (domain.includes(dict.IF)) {
                 //TODO
+
             } else if (domain.includes(dict.AFTER)) {
                 //NOTTODO
             } else {
@@ -188,77 +226,41 @@ class MainFragment extends React.Component {
 
 
 
-        function checkActionInDD(val) {
-            let ddArray = val.split(';')
-            let filteredArray = ddArray.filter(domain => domain.includes(dict.INVOKES) || domain.includes(dict.TRIGGERS))
-            console.info("DD ACTION FILTERED", filteredArray)
-            filteredArray.forEach((item) => {
-                calculateTime(item, ddArray.indexOf(item))
+        function checkActionInDD(acs, currentObservation, currentIndex) {
+            console.log("acs, currentObservation, currentIndex", acs, currentObservation, currentIndex);
+            parsedSemanticArray.forEach((item) => {
+                if (item.cause === acs) {
+                    writeInTimeline(item, currentObservation, currentIndex)
+                }
             })
         }
 
-        function calculateTime(domain, index) {
-            let parsedDomain = domain.split(dict.INVOKES)
-            let cause = parsedDomain[0].trim()
-            if (domain.includes(dict.IF) && domain.includes(dict.AFTER)) {
-                //TODO
-            } else if (domain.includes(dict.IF)) {
-                let consequenceWithCondition = parsedDomain[1].split(dict.IF)
-                let consequence = consequenceWithCondition[0].trim()
-                let condition = consequenceWithCondition[1].trim()
-                if (condition.includes('∧') || condition.includes('⋁')) {
+        function writeInTimeline(semantic, obs, index) {
+            console.log("timelineData", timelineData);
+            let cnd = semantic.condition
+            if (cnd) {
+                if (cnd.includes('⋁') || cnd.includes('⋀')) {
                     //TODO
-                    console.log('action has or/and condition', condition)
                 } else {
-                    //TODO
-                    let conditionSign = 1;
-                    if (condition.includes('¬')) {
-                        condition = condition.substring(1);
-                        conditionSign = 0
+                    let cndSign = 1
+                    if (cnd.includes('¬')) {
+                        cndSign = 0
+                        cnd = cnd.replace('¬', '')
                     }
-                    let filteredObserveration = timelineData[index - 1].val.filter(item => (item.value === condition) && item)
-                    if (filteredObserveration.length > 0 && filteredObserveration[0].sign == conditionSign) {
-                        action_list[index - 1] = consequence
-                    }
-                    console.log('action_list with one condition', action_list, consequence, index, filteredObserveration)
-
+                    obs.forEach(item => {
+                        if (item.value === cnd && item.sign === cndSign) {
+                            if (semantic.step < 1)
+                                timelineData[index + semantic.step].action = semantic.consequence
+                            action_list[index + semantic.step] = semantic.consequence
+                        }
+                    })
                 }
-            } else if (domain.includes(dict.AFTER)) {
-                let consequenceWithCondition = parsedDomain[1].split(dict.AFTER)
-                let consequence = consequenceWithCondition[0]
-                let step = parseInt(consequenceWithCondition[1])
-                console.log('action_list', action_list)
-                function getIndexes(arr, val) {
-                    var indexes = [],
-                        i = -1;
-                    while ((i = arr.indexOf(val, i + 1)) != -1) {
-                        indexes.push(i);
-                    }
-                    return indexes;
-                }
-                let filteredActionList = getIndexes(action_list, cause)
-                console.log('filteredActionList', filteredActionList)
-                filteredActionList.forEach(item => action_list[item + step + 1] = consequence)
-
             } else {
-                let consequence = parsedDomain[1]
-                console.log('action_list', action_list)
-                function getIndexes(arr, val) {
-                    var indexes = [],
-                        i = -1;
-                    while ((i = arr.indexOf(val, i + 1)) != -1) {
-                        indexes.push(i);
-                    }
-                    return indexes;
-                }
-                let filteredActionList = getIndexes(action_list, cause)
-                console.log('filteredActionList', filteredActionList)
-                filteredActionList.forEach(item => action_list[item + 1] = consequence)
-
-
+                if (semantic.step < 1)
+                    timelineData[index + semantic.step].action = semantic.consequence
+                action_list[index + semantic.step] = semantic.consequence
             }
         }
-
         /**
          * [parseACS function]
          * @param  {String} val [value of the ACS input]
@@ -287,6 +289,7 @@ class MainFragment extends React.Component {
             while (matches = regExp.exec(val)) {
                 let valuesArr = matches[1].split(',')[0].split('∧')
                 valuesArr.forEach((item, index) => {
+                    item = item.trim()
                     if (item.includes('¬')) {
                         valuesArr[index] = {
                             [item.replace('¬', '')]: 0
