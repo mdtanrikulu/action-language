@@ -24,6 +24,7 @@ let dict = Object.freeze({
 
 })
 
+let branches = [];
 let action_list = [];
 let observation_list = [];
 let timelineData = [];
@@ -151,12 +152,15 @@ class MainFragment extends React.Component {
                                 let checkedObservation = checkObservationInDD(dd, al[i - 1])
                                 checkedObservation.forEach(observation => {
 
-                                    if (observation && observation.includes(item.trim().charAt(0))) {
+                                    if (observation && typeof observation === 'string' && observation.includes(item.trim().charAt(0))) {
                                         val.push({
                                             value: item.trim(),
                                             sign: observation.includes('¬') ? 0 : 1
                                         })
                                         itemChanged = true
+                                    } else if (observation && Array.isArray(observation) && observation[0].includes(item.trim().charAt(0))) {
+                                        alert('array!')
+
                                     }
                                 })
                                 if (!itemChanged)
@@ -232,6 +236,7 @@ class MainFragment extends React.Component {
                     observation = parsedDomain[1].trim()
                 }
                 console.log("observation is ", observation)
+                return observation.charAt(0) === '¬' ? observation.substr(0, 2) : observation.charAt(0)
             } else if (domain.includes(dict.RELEASES)) {
 
                 let parsedDomain = domain.split(dict.RELEASES)
@@ -247,8 +252,8 @@ class MainFragment extends React.Component {
                     observation = parsedDomain[1].trim()
                 }
                 console.log("observation is ", observation)
+                return observation.charAt(0) === '¬' ? [observation.substr(0, 2), observation.charAt(1)] : [observation.charAt(0), "¬" + observation.charAt(0)]
             }
-            return observation.charAt(0) === '¬' ? observation.substr(0, 2) : observation.charAt(0)
         }
 
 
