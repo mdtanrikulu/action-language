@@ -1,19 +1,18 @@
-# React-Route-Redux-HMR-Boilerplate
+# Action Language Impelementation with Javascript
 ---
  
 Welcome. 
 
-It's a simple react web application template with search, modal and lazy-load features.
- 
- 
+It's an implementation of the Action Language in Knowledge Representation and Reasoning. 
+
  
 Setup
 ---
  
  Clone the project, enter the project directory, then install the dependencies.
 ```
-git clone https://github.com/mdtanrikulu/react-boilerplate.git
-cd react-boilerplate
+https://github.com/mdtanrikulu/action-language.git
+cd action-language
 npm install
 ```
  
@@ -44,3 +43,17 @@ Requirements
 
 - node ^6.x.x
 
+Todo
+---
+
+- [x] Cause without IF condition
+- [ ] Cause with any IF condition (one or multi)
+- [ ] Release without IF condition done, but all possibilities should be calculated and alternative timelines should be drawn. 
+- [ ] Release with any IF condition (one or multi)
+- [x] Invokes without IF condition
+- [x] Invokes with one IF condition
+- [x] Invokes with AFTER and without IF condition
+- [x] Invokes with AFTER and with one IF condition
+- [x] Trigger
+- [ ] Inconsistency (action conflict in same moment of the timeline)
+- [ ] Infinite action warning
