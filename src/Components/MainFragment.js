@@ -145,21 +145,25 @@ class MainFragment extends React.Component {
                         })
                     } else {
                         validValues.forEach(timeline => {
-                            Object.keys(timeline).forEach(item => {
-                                let checkedObservation = checkObservationInDD(dd, al[i - 1])[0]
-                                if (checkedObservation && checkedObservation.includes(item.trim().charAt(0))) {
-                                    let fetchLetter = checkedObservation.replace('¬', '').charAt(0)
-                                    val.push({
-                                        value: fetchLetter === 'l' ? 'loaded' : (fetchLetter === 'a' ? 'alive' : 'hidden'),
-                                        sign: checkedObservation.includes('¬') ? 0 : 1
-                                    })
 
-                                } else {
+                            Object.keys(timeline).forEach(item => {
+                                let itemChanged = false
+                                let checkedObservation = checkObservationInDD(dd, al[i - 1])
+                                checkedObservation.forEach(observation => {
+
+                                    if (observation && observation.includes(item.trim().charAt(0))) {
+                                        val.push({
+                                            value: item.trim(),
+                                            sign: observation.includes('¬') ? 0 : 1
+                                        })
+                                        itemChanged = true
+                                    }
+                                })
+                                if (!itemChanged)
                                     val.push({
                                         value: item.trim(),
                                         sign: timeline[item]
                                     })
-                                }
                             })
                         })
                     }
@@ -211,26 +215,40 @@ class MainFragment extends React.Component {
         }
 
         function calculatePosibilities(domain) {
-            if (domain.includes(dict.IF) && domain.includes(dict.AFTER)) {
-                //NOTTODO
-            } else if (domain.includes(dict.IF)) {
-                //TODO
+            domain = domain.trim();
+            let observation;
+            if (domain.includes(dict.CAUSES)) {
 
-            } else if (domain.includes(dict.AFTER)) {
-                //NOTTODO
-            } else {
-                let observation;
-                if (domain.includes(dict.CAUSES)) {
-                    let cause = domain.split(dict.CAUSES)[0].trim()
-                    observation = domain.split(dict.CAUSES)[1].trim()
-                    console.log("observation is ", observation)
-                } else if (domain.includes(dict.RELEASES)) {
-                    let cause = domain.split(dict.RELEASES)[0].trim()
-                    observation = domain.split(dict.RELEASES)[1].trim()
-                    console.log("observation is ", observation)
+                let parsedDomain = domain.split(dict.CAUSES)
+                let cause = parsedDomain[0].trim()
+
+                if (domain.includes(dict.IF)) {
+
+                    let parsedCondition = parsedDomain[1].split(dict.IF)
+                    observation = parsedCondition[0].trim()
+                    let condition = parsedCondition[1].trim()
+
+                } else {
+                    observation = parsedDomain[1].trim()
                 }
-                return observation.charAt(0) === '¬' ? observation.substr(0, 2) : observation.charAt(0)
+                console.log("observation is ", observation)
+            } else if (domain.includes(dict.RELEASES)) {
+
+                let parsedDomain = domain.split(dict.RELEASES)
+                let cause = parsedDomain[0].trim()
+
+                if (domain.includes(dict.IF)) {
+                    //TODO
+                    let parsedCondition = parsedDomain[1].split(dict.IF)
+                    observation = parsedCondition[0].trim()
+                    let condition = parsedCondition[1].trim()
+
+                } else {
+                    observation = parsedDomain[1].trim()
+                }
+                console.log("observation is ", observation)
             }
+            return observation.charAt(0) === '¬' ? observation.substr(0, 2) : observation.charAt(0)
         }
 
 
