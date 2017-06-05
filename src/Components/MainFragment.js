@@ -114,6 +114,32 @@ class MainFragment extends React.Component {
 
         // checkActionInDD(domainDescription.value)
 
+        function checkIfConditionTrue(condition, currentObservation) {
+            if (condition.includes("∧") || condition.includes("⋁")) {
+            } else {
+                if (condition.includes("¬")) {
+                    currentObservation.forEach(observation => {
+                        Object.keys(observation).forEach(item => {
+                            if (observation["sign"] == 0 && "¬" + observation["value"] == condition) {
+                                console.log("NOT BOK " + "¬" + observation["value"] + " = " + condition)
+                            }
+
+                        })
+                    })
+                } else {
+                    currentObservation.forEach(observation => {
+                        Object.keys(observation).forEach(item => {
+                            if (observation["sign"] == 1 && observation["value"] == condition) {
+                                console.log("BOK " + observation["value"] + " = " + condition)
+                            }
+
+                        })
+                    })
+                }
+
+            }
+        }
+
         function createLine(al, ol, dd) {
             timelineData = []
             console.log("AL", al)
@@ -148,7 +174,7 @@ class MainFragment extends React.Component {
 
                             Object.keys(timeline).forEach(item => {
                                 let itemChanged = false
-                                let checkedObservation = checkObservationInDD(dd, al[i - 1])
+                                let checkedObservation = checkObservationInDD(dd, al[i - 1], timelineData[i - 1].val)
                                 checkedObservation.forEach(observation => {
 
                                     if (observation && observation.includes(item.trim().charAt(0))) {
@@ -201,20 +227,19 @@ class MainFragment extends React.Component {
         }
 
 
-        function checkObservationInDD(dd, action) {
+        function checkObservationInDD(dd, action, currentObservation) {
             let posibilites = []
             let ddArray = dd.split(';')
             let filteredArray = ddArray.filter(domain => domain.trim().startsWith(action) && (domain.includes(dict.CAUSES) || domain.includes(dict.RELEASES)))
             console.log(filteredArray)
             filteredArray.forEach(item => {
                 console.log("EACH ITEM", item)
-                posibilites.push(calculatePosibilities(item))
+                posibilites.push(calculatePosibilities(item, currentObservation))
             })
 
             return posibilites
         }
-
-        function calculatePosibilities(domain) {
+        function calculatePosibilities(domain, currentObservation) {
             domain = domain.trim();
             let observation;
             if (domain.includes(dict.CAUSES)) {
@@ -227,6 +252,8 @@ class MainFragment extends React.Component {
                     let parsedCondition = parsedDomain[1].split(dict.IF)
                     observation = parsedCondition[0].trim()
                     let condition = parsedCondition[1].trim()
+
+                    checkIfConditionTrue(condition, currentObservation)
 
                 } else {
                     observation = parsedDomain[1].trim()
