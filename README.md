@@ -55,5 +55,5 @@ Todo
 - [x] Invokes with AFTER and without IF condition
 - [x] Invokes with AFTER and with one IF condition
 - [x] Trigger
-- [ ] Inconsistency (action conflict in same moment of the timeline)
-- [ ] Infinite action warning
+- [x] Inconsistency (action conflict in same moment of the timeline)
+- [x] Infinite action warning
