@@ -24,17 +24,19 @@ class TimeLine extends React.Component {
     }
 
     render() {
-        const {data} = this.props
+        const {data, amount} = this.props
         return (
-            <div className="container__timeline">
-                {data && this.createLine(data)}
+            <div>
+                <h4>Case {amount}</h4>
+                <div className="container__timeline">
+                    {data && this.createLine(data)}
+                </div>
             </div>
         );
     }
 }
 
 const mapStateToProps = state => ({
-    data: state.timeline.timelineData
 })
 
 const mapDispatchToProps = dispatch => ({

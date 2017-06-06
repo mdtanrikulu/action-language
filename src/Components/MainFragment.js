@@ -24,19 +24,18 @@ let dict = Object.freeze({
 
 })
 
-let branches = [];
-let action_list = [];
-let observation_list = [];
-let timelineData = [];
-let validValues = []
 
 class MainFragment extends React.Component {
 
     constructor(props) {
         super(props);
+        this.state = {
+            branches: []
+        }
     }
 
     parseSemantic(dd) {
+        let branches = [];
         let tempArray = []
         let filteredDD = dd.filter(item => item.includes(dict.INVOKES) || item.includes(dict.TRIGGERS))
         filteredDD.map(domain => {
@@ -95,27 +94,36 @@ class MainFragment extends React.Component {
     }
 
     _handleDraw() {
+        let branches = [];
+        let action_list = [];
+        let observation_list = [];
+        let timelineData = [];
+        let validValues = []
 
         const {domainDescription, obs, acs} = this.refs
-        console.info("===========================================================")
-        console.info("DD", domainDescription.value)
-        console.info("OBS", obs.value)
-        console.info("ACS", acs.value)
-        console.info("===========================================================")
-        action_list = parseACS(acs.value)
-        observation_list = parseOBS(obs.value)
-        console.log("ACS LIST", action_list)
-        console.log("OBS LIST", observation_list)
-        console.info("===========================================================")
-
         let ddArray = domainDescription.value.split(';')
+        let releaseCount = (domainDescription.value.match(/releases/g) || []).length;
+        releaseCount = releaseCount > 1 ? releaseCount ** 2 - 1 : releaseCount
         let parsedSemanticArray = this.parseSemantic(ddArray)
+        let maxPossibleLineAmount = 1;
+        let td = null;
+        for (let possibleLines = 0; possibleLines < maxPossibleLineAmount + releaseCount; possibleLines++) {
+            console.info("===========================================================")
+            console.info("DD", domainDescription.value)
+            console.info("OBS", obs.value)
+            console.info("ACS", acs.value)
+            console.info("===========================================================")
+            action_list = parseACS(acs.value)
+            observation_list = parseOBS(obs.value)
+            console.log("ACS LIST", action_list)
+            console.log("OBS LIST", observation_list)
+            console.info("===========================================================")
 
-        let td = createLine(action_list, observation_list, domainDescription.value)
+            td = createLine(action_list, observation_list, domainDescription.value, possibleLines)
+            branches.push(td)
+        }
 
-        // checkActionInDD(domainDescription.value)
-
-        function createLine(al, ol, dd) {
+        function createLine(al, ol, dd, possibleLines) {
             timelineData = []
             console.log("AL", al)
             console.log("AL LENGTH", al.length)
@@ -159,8 +167,15 @@ class MainFragment extends React.Component {
                                         })
                                         itemChanged = true
                                     } else if (observation && Array.isArray(observation) && observation[0].includes(item.trim().charAt(0))) {
-                                        alert('array!')
-
+                                        // alert('array!')
+                                        let nextItem = possibleLines % observation.length
+                                        val.push({
+                                            value: item.trim(),
+                                            sign: observation[nextItem].includes('¬') ? 0 : 1
+                                        })
+                                        if (possibleLines + 1 < observation.length) {
+                                        }
+                                        itemChanged = true
                                     }
                                 })
                                 if (!itemChanged)
@@ -238,7 +253,6 @@ class MainFragment extends React.Component {
                 console.log("observation is ", observation)
                 return observation.charAt(0) === '¬' ? observation.substr(0, 2) : observation.charAt(0)
             } else if (domain.includes(dict.RELEASES)) {
-
                 let parsedDomain = domain.split(dict.RELEASES)
                 let cause = parsedDomain[0].trim()
 
@@ -368,12 +382,20 @@ class MainFragment extends React.Component {
                 action: null
             }
         ]
-        this.props.actions.setTimeline(td)
+        this.setState({
+            branches
+        })
+    }
+
+    drawTimeline(branches) {
+        console.log("BRANCHES", branches)
+        return branches.map((branch, index) => <Timeline key={index.toString()} data={branch} amount={index + 1}/>)
     }
 
     // <span>π (pi)</span>
     render() {
         const {actions, status, search, signIn} = this.props;
+        const {branches} = this.state
         return (
             <div className="main-fragment">
               <div className="main-fragment-content">
@@ -399,7 +421,9 @@ ESCAPE releases hidden." rows={8}/>
                 </div>
               </div>
                 <button onClick={::this._handleDraw}>Draw</button>
-                <Timeline/>
+                <div className="panel__timeline">
+                {branches.length > 0 && this.drawTimeline(branches)}
+                </div>
               </div>
             </div>
         );
