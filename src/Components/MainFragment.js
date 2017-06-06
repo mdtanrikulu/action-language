@@ -24,13 +24,13 @@ let dict = Object.freeze({
 
 })
 
-
 class MainFragment extends React.Component {
 
     constructor(props) {
         super(props);
         this.state = {
-            branches: []
+            branches: [],
+            error: []
         }
     }
 
@@ -94,7 +94,11 @@ class MainFragment extends React.Component {
     }
 
     _handleDraw() {
+
+
+        let errorCount = 0;
         let branches = [];
+        let error = [];
         let action_list = [];
         let observation_list = [];
         let timelineData = [];
@@ -129,6 +133,10 @@ class MainFragment extends React.Component {
             console.log("AL LENGTH", al.length)
             console.info("===========================================================")
             for (let i = 0; i <= al.length; i++) {
+
+                if (i > 20) {
+                    throw new Error('There\'s an infitive action case in domain descripton!');
+                }
                 let instant;
                 let val = []
                 console.log('OL i', ol[i], i)
@@ -297,6 +305,11 @@ class MainFragment extends React.Component {
                         if (item.value === cnd && item.sign === cndSign) {
                             if (semantic.step < 1)
                                 timelineData[index + semantic.step].action = semantic.consequence
+                            if (action_list[index + semantic.step] != null) {
+                                error[errorCount++] = {
+                                    message: `The timeline is inconsistent because ${action_list[index + semantic.step]} and ${semantic.consequence} overlapped in moment ${index + semantic.step}`
+                                }
+                            }
                             action_list[index + semantic.step] = semantic.consequence
                         }
                     })
@@ -383,19 +396,20 @@ class MainFragment extends React.Component {
             }
         ]
         this.setState({
-            branches
+            branches,
+            error
         })
     }
 
-    drawTimeline(branches) {
+    drawTimeline(branches, error) {
         console.log("BRANCHES", branches)
-        return branches.map((branch, index) => <Timeline key={index.toString()} data={branch} amount={index + 1}/>)
+        return branches.map((branch, index) => <Timeline key={index.toString()} data={branch} error={error[index]} amount={index + 1}/>)
     }
 
     // <span>π (pi)</span>
     render() {
         const {actions, status, search, signIn} = this.props;
-        const {branches} = this.state
+        const {branches, error} = this.state
         return (
             <div className="main-fragment">
               <div className="main-fragment-content">
@@ -422,7 +436,7 @@ ESCAPE releases hidden." rows={8}/>
               </div>
                 <button onClick={::this._handleDraw}>Draw</button>
                 <div className="panel__timeline">
-                {branches.length > 0 && this.drawTimeline(branches)}
+                {branches.length > 0 && this.drawTimeline(branches, error)}
                 </div>
               </div>
             </div>

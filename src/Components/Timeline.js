@@ -10,7 +10,7 @@ class TimeLine extends React.Component {
         super(props);
     }
 
-    createLine(data) {
+    createLine(data, error) {
         return data.map((item, index) => <div className="item__timeline" key={index.toString()}>
             <div className="indicator__timeline">
                 <span>{index}</span>
@@ -24,12 +24,12 @@ class TimeLine extends React.Component {
     }
 
     render() {
-        const {data, amount} = this.props
+        const {data, amount, error} = this.props
         return (
             <div>
-                <h4>Case {amount}</h4>
+                <h4>Case {amount} {error && ': ' + error.message}</h4>
                 <div className="container__timeline">
-                    {data && this.createLine(data)}
+                    {data && this.createLine(data, error)}
                 </div>
             </div>
         );
