@@ -114,30 +114,29 @@ class MainFragment extends React.Component {
 
         // checkActionInDD(domainDescription.value)
 
-        function checkIfConditionTrue(condition, currentObservation) {
+        function checkIfConditionTrue(parsedDomain, currentObservation) {
+            let parsedCondition = parsedDomain[1].split(dict.IF)
+            let consequence = parsedCondition[0].trim()
+            let condition = parsedCondition[1].trim()
+
+            let cnsSign = 1
+
+            if (condition.startsWith('¬')) {
+                cnsSign = 0
+                condition = condition.replace("¬", "")
+            }
+
             if (condition.includes("∧") || condition.includes("⋁")) {
             } else {
-                if (condition.includes("¬")) {
-                    currentObservation.forEach(observation => {
-                        Object.keys(observation).forEach(item => {
-                            if (observation["sign"] == 0 && "¬" + observation["value"] == condition) {
-                                console.log("NOT BOK " + "¬" + observation["value"] + " = " + condition)
-                            }
-
-                        })
-                    })
-                } else {
-                    currentObservation.forEach(observation => {
-                        Object.keys(observation).forEach(item => {
-                            if (observation["sign"] == 1 && observation["value"] == condition) {
-                                console.log("BOK " + observation["value"] + " = " + condition)
-                            }
-
-                        })
-                    })
-                }
-
+                let result = consequence.startsWith("¬") ? consequence.replace("¬", "") : "¬" + consequence
+                currentObservation.forEach(observation => {
+                    if (observation.sign == cnsSign && observation.value == condition) {
+                        result = consequence
+                    }
+                })
+                return result
             }
+            return consequence.startsWith("¬") ? consequence.replace("¬", "") : "¬" + consequence
         }
 
         function createLine(al, ol, dd) {
@@ -249,11 +248,7 @@ class MainFragment extends React.Component {
 
                 if (domain.includes(dict.IF)) {
 
-                    let parsedCondition = parsedDomain[1].split(dict.IF)
-                    observation = parsedCondition[0].trim()
-                    let condition = parsedCondition[1].trim()
-
-                    checkIfConditionTrue(condition, currentObservation)
+                    observation = checkIfConditionTrue(parsedDomain, currentObservation)
 
                 } else {
                     observation = parsedDomain[1].trim()
@@ -408,8 +403,7 @@ class MainFragment extends React.Component {
                 <div>
                     <label>Domain Description</label>
                     <textarea ref="domainDescription" className="domain-description-input__main" onChange={::this._handleInput} defaultValue="LOAD causes loaded;
-SHOOT causes ¬loaded;
-SHOOT causes ¬alive if loaded ∧ ¬hidden;
+SHOOT causes ¬loaded if ¬hidden;
 LOAD invokes ESCAPE if loaded;
 ESCAPE releases hidden." rows={8}/>
                 </div>
