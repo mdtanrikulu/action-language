@@ -47,7 +47,7 @@ Todo
 ---
 
 - [x] Cause without IF condition
-- [ ] Cause with any IF condition (one or multi)
+- [x] Cause with any IF condition (one or multi)
 - [ ] Release without IF condition done, but all possibilities should be calculated and alternative timelines should be drawn. 
 - [ ] Release with any IF condition (one or multi)
 - [x] Invokes without IF condition
