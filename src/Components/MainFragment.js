@@ -118,12 +118,23 @@ class MainFragment extends React.Component {
             let parsedCondition = parsedDomain[1].split(dict.IF)
             let consequence = parsedCondition[0].trim()
             let condition = parsedCondition[1].trim()
+            let tempObs = null;
             if (condition.includes("⋀") || condition.includes("⋁")) {
                 var domain = condition;
                 let reg = new RegExp(/(¬?)\w+/g)
                 let sonuc = domain.match(reg)
-                domain = domain.replace("⋀", "&&");
-                domain = domain.replace('⋁', '||');
+
+                var andStr = '⋀';
+                var reAnd = new RegExp(andStr, 'g');
+
+                domain = domain.replace(reAnd, '&&');
+
+                var orStr = '⋁';
+                var reOr = new RegExp(orStr, 'g');
+
+
+                domain = domain.replace(reOr, '||');
+
                 currentObservation.forEach(observation => {
                     sonuc.forEach(item => {
                         let cnsSign = 1
@@ -133,28 +144,36 @@ class MainFragment extends React.Component {
                             item = item.replace("¬", "")
                         }
                         if (observation.sign == cnsSign && observation.value == item) {
-                            domain = domain.replace(item, 'true')
+                            domain = domain.replace(cnsSign == 0 ? "¬" + item : item, 'true')
+                            tempObs = observation.sign == 0 ? "¬" + observation.value : observation.value
                         }
                     })
 
                 })
-                domain = domain.replace("¬", "")
+                //domain = domain.replace("¬", "")
+                domain = domain.replace("¬hidden", "false")
+                domain = domain.replace("¬alive", "false")
+                domain = domain.replace("¬loaded", "false")
                 domain = domain.replace("hidden", "false")
                 domain = domain.replace("alive", "false")
                 domain = domain.replace("loaded", "false")
-                domain = domain.replace("¬", "")
+                //domain = domain.replace("¬", "")
+
+                console.log("EVAL " + domain)
                 if (eval(domain))
                     return consequence
+
             } else {
                 let result = consequence.startsWith("¬") ? consequence.replace("¬", "") : "¬" + consequence
                 currentObservation.forEach(observation => {
                     if (observation.sign == cnsSign && observation.value == condition) {
                         result = consequence
+                        tempObs = observation.sign == 0 ? "¬" + observation.value : observation.value
                     }
                 })
                 return result
             }
-            return consequence.startsWith("¬") ? consequence.replace("¬", "") : "¬" + consequence
+            return tempObs
         }
 
         function createLine(al, ol, dd) {
