@@ -24,18 +24,18 @@ let dict = Object.freeze({
 
 })
 
-let action_list = [];
-let observation_list = [];
-let timelineData = [];
-let validValues = []
-
 class MainFragment extends React.Component {
 
     constructor(props) {
         super(props);
+        this.state = {
+            branches: [],
+            error: []
+        }
     }
 
     parseSemantic(dd) {
+        let branches = [];
         let tempArray = []
         let filteredDD = dd.filter(item => item.includes(dict.INVOKES) || item.includes(dict.TRIGGERS))
         filteredDD.map(domain => {
@@ -95,31 +95,48 @@ class MainFragment extends React.Component {
 
     _handleDraw() {
 
+
+        let errorCount = 0;
+        let branches = [];
+        let error = [];
+        let action_list = [];
+        let observation_list = [];
+        let timelineData = [];
+        let validValues = []
+
         const {domainDescription, obs, acs} = this.refs
-        console.info("===========================================================")
-        console.info("DD", domainDescription.value)
-        console.info("OBS", obs.value)
-        console.info("ACS", acs.value)
-        console.info("===========================================================")
-        action_list = parseACS(acs.value)
-        observation_list = parseOBS(obs.value)
-        console.log("ACS LIST", action_list)
-        console.log("OBS LIST", observation_list)
-        console.info("===========================================================")
-
         let ddArray = domainDescription.value.split(';')
+        let releaseCount = (domainDescription.value.match(/releases/g) || []).length;
+        releaseCount = releaseCount > 1 ? releaseCount ** 2 - 1 : releaseCount
         let parsedSemanticArray = this.parseSemantic(ddArray)
+        let maxPossibleLineAmount = 1;
+        let td = null;
+        for (let possibleLines = 0; possibleLines < maxPossibleLineAmount + releaseCount; possibleLines++) {
+            console.info("===========================================================")
+            console.info("DD", domainDescription.value)
+            console.info("OBS", obs.value)
+            console.info("ACS", acs.value)
+            console.info("===========================================================")
+            action_list = parseACS(acs.value)
+            observation_list = parseOBS(obs.value)
+            console.log("ACS LIST", action_list)
+            console.log("OBS LIST", observation_list)
+            console.info("===========================================================")
 
-        let td = createLine(action_list, observation_list, domainDescription.value)
+            td = createLine(action_list, observation_list, domainDescription.value, possibleLines)
+            branches.push(td)
+        }
 
-        // checkActionInDD(domainDescription.value)
-
-        function createLine(al, ol, dd) {
+        function createLine(al, ol, dd, possibleLines) {
             timelineData = []
             console.log("AL", al)
             console.log("AL LENGTH", al.length)
             console.info("===========================================================")
             for (let i = 0; i <= al.length; i++) {
+
+                if (i > 20) {
+                    throw new Error('There\'s an infitive action case in domain descripton!');
+                }
                 let instant;
                 let val = []
                 console.log('OL i', ol[i], i)
@@ -151,11 +168,21 @@ class MainFragment extends React.Component {
                                 let checkedObservation = checkObservationInDD(dd, al[i - 1])
                                 checkedObservation.forEach(observation => {
 
-                                    if (observation && observation.includes(item.trim().charAt(0))) {
+                                    if (observation && typeof observation === 'string' && observation.includes(item.trim().charAt(0))) {
                                         val.push({
                                             value: item.trim(),
                                             sign: observation.includes('¬') ? 0 : 1
                                         })
+                                        itemChanged = true
+                                    } else if (observation && Array.isArray(observation) && observation[0].includes(item.trim().charAt(0))) {
+                                        // alert('array!')
+                                        let nextItem = possibleLines % observation.length
+                                        val.push({
+                                            value: item.trim(),
+                                            sign: observation[nextItem].includes('¬') ? 0 : 1
+                                        })
+                                        if (possibleLines + 1 < observation.length) {
+                                        }
                                         itemChanged = true
                                     }
                                 })
@@ -232,8 +259,8 @@ class MainFragment extends React.Component {
                     observation = parsedDomain[1].trim()
                 }
                 console.log("observation is ", observation)
+                return observation.charAt(0) === '¬' ? observation.substr(0, 2) : observation.charAt(0)
             } else if (domain.includes(dict.RELEASES)) {
-
                 let parsedDomain = domain.split(dict.RELEASES)
                 let cause = parsedDomain[0].trim()
 
@@ -247,8 +274,8 @@ class MainFragment extends React.Component {
                     observation = parsedDomain[1].trim()
                 }
                 console.log("observation is ", observation)
+                return observation.charAt(0) === '¬' ? [observation.substr(0, 2), observation.charAt(1)] : [observation.charAt(0), "¬" + observation.charAt(0)]
             }
-            return observation.charAt(0) === '¬' ? observation.substr(0, 2) : observation.charAt(0)
         }
 
 
@@ -278,6 +305,11 @@ class MainFragment extends React.Component {
                         if (item.value === cnd && item.sign === cndSign) {
                             if (semantic.step < 1)
                                 timelineData[index + semantic.step].action = semantic.consequence
+                            if (action_list[index + semantic.step] != null) {
+                                error[errorCount++] = {
+                                    message: `The timeline is inconsistent because ${action_list[index + semantic.step]} and ${semantic.consequence} overlapped in moment ${index + semantic.step}`
+                                }
+                            }
                             action_list[index + semantic.step] = semantic.consequence
                         }
                     })
@@ -363,12 +395,21 @@ class MainFragment extends React.Component {
                 action: null
             }
         ]
-        this.props.actions.setTimeline(td)
+        this.setState({
+            branches,
+            error
+        })
+    }
+
+    drawTimeline(branches, error) {
+        console.log("BRANCHES", branches)
+        return branches.map((branch, index) => <Timeline key={index.toString()} data={branch} error={error[index]} amount={index + 1}/>)
     }
 
     // <span>π (pi)</span>
     render() {
         const {actions, status, search, signIn} = this.props;
+        const {branches, error} = this.state
         return (
             <div className="main-fragment">
               <div className="main-fragment-content">
@@ -394,7 +435,9 @@ ESCAPE releases hidden." rows={8}/>
                 </div>
               </div>
                 <button onClick={::this._handleDraw}>Draw</button>
-                <Timeline/>
+                <div className="panel__timeline">
+                {branches.length > 0 && this.drawTimeline(branches, error)}
+                </div>
               </div>
             </div>
         );
