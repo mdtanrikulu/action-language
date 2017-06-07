@@ -158,6 +158,8 @@ class MainFragment extends React.Component {
                         }
                         if (observation.sign == cnsSign && observation.value == item) {
                             domain = domain.replace(cnsSign == 0 ? "¬" + item : item, 'true')
+                        }
+                        if (consequence.includes(observation.value)) {
                             tempObs = observation.sign == 0 ? "¬" + observation.value : observation.value
                         }
                     })
@@ -389,6 +391,11 @@ class MainFragment extends React.Component {
             let regExp = /\(([^()]+)\)/g;
             let matches;
             while (matches = regExp.exec(val)) {
+                if (result[parseInt(matches[1].split(',')[1])] != null) {
+                    error[errorCount++] = {
+                        message: `The timeline is inconsistent because ACS has more than one action in the same moment.`
+                    }
+                }
                 result[parseInt(matches[1].split(',')[1])] = matches[1].split(',')[0]
             }
 
@@ -481,7 +488,8 @@ class MainFragment extends React.Component {
                 <div>
                     <label>Domain Description</label>
                     <textarea ref="domainDescription" className="domain-description-input__main" onChange={::this._handleInput} defaultValue="LOAD causes loaded;
-SHOOT causes loaded if ¬hidden ⋀ alive;
+SHOOT causes ¬loaded;
+SHOOT causes ¬alive if ¬hidden ⋀ loaded;
 LOAD invokes ESCAPE if loaded;
 ESCAPE releases hidden." rows={8}/>
                 </div>
@@ -489,7 +497,7 @@ ESCAPE releases hidden." rows={8}/>
                     <label>Scenario (OBS)</label>
                     <input ref="obs" className="scenario-input__main"  onChange={::this._handleInput} defaultValue="{(alive ∧ ¬loaded ∧ ¬hidden, 0)}"/>
                     <label>Scenario (ACS)</label>
-                    <input ref="acs" className="scenario-input__main" defaultValue="{(SHOOT,1)}"/>
+                    <input ref="acs" className="scenario-input__main" defaultValue="{(LOAD,1),(SHOOT,3)}"/>
                 </div>
               </div>
                 <button onClick={::this._handleDraw}>Draw</button>
