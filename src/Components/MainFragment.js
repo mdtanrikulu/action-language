@@ -127,6 +127,68 @@ class MainFragment extends React.Component {
             branches.push(td)
         }
 
+        function checkIfConditionTrue(parsedDomain, currentObservation) {
+            let parsedCondition = parsedDomain[1].split(dict.IF)
+            let consequence = parsedCondition[0].trim()
+            let condition = parsedCondition[1].trim()
+            let tempObs = null;
+            if (condition.includes("⋀") || condition.includes("⋁")) {
+                var domain = condition;
+                let reg = new RegExp(/(¬?)\w+/g)
+                let sonuc = domain.match(reg)
+
+                var andStr = '⋀';
+                var reAnd = new RegExp(andStr, 'g');
+
+                domain = domain.replace(reAnd, '&&');
+
+                var orStr = '⋁';
+                var reOr = new RegExp(orStr, 'g');
+
+
+                domain = domain.replace(reOr, '||');
+
+                currentObservation.forEach(observation => {
+                    sonuc.forEach(item => {
+                        let cnsSign = 1
+
+                        if (item.startsWith('¬')) {
+                            cnsSign = 0
+                            item = item.replace("¬", "")
+                        }
+                        if (observation.sign == cnsSign && observation.value == item) {
+                            domain = domain.replace(cnsSign == 0 ? "¬" + item : item, 'true')
+                            tempObs = observation.sign == 0 ? "¬" + observation.value : observation.value
+                        }
+                    })
+
+                })
+                //domain = domain.replace("¬", "")
+                domain = domain.replace("¬hidden", "false")
+                domain = domain.replace("¬alive", "false")
+                domain = domain.replace("¬loaded", "false")
+                domain = domain.replace("hidden", "false")
+                domain = domain.replace("alive", "false")
+                domain = domain.replace("loaded", "false")
+                //domain = domain.replace("¬", "")
+
+                console.log("EVAL " + domain)
+                if (eval(domain))
+                    return consequence
+
+            } else {
+                let result = consequence.startsWith("¬") ? consequence.replace("¬", "") : "¬" + consequence
+                currentObservation.forEach(observation => {
+                    if (observation.sign == cnsSign && observation.value == condition) {
+                        result = consequence
+                        tempObs = observation.sign == 0 ? "¬" + observation.value : observation.value
+                    }
+                })
+                return result
+            }
+            return tempObs
+        }
+
         function createLine(al, ol, dd, possibleLines) {
             timelineData = []
             console.log("AL", al)
@@ -165,7 +227,7 @@ class MainFragment extends React.Component {
 
                             Object.keys(timeline).forEach(item => {
                                 let itemChanged = false
-                                let checkedObservation = checkObservationInDD(dd, al[i - 1])
+                                let checkedObservation = checkObservationInDD(dd, al[i - 1], timelineData[i - 1].val)
                                 checkedObservation.forEach(observation => {
 
                                     if (observation && typeof observation === 'string' && observation.includes(item.trim().charAt(0))) {
@@ -228,20 +290,19 @@ class MainFragment extends React.Component {
         }
 
 
-        function checkObservationInDD(dd, action) {
+        function checkObservationInDD(dd, action, currentObservation) {
             let posibilites = []
             let ddArray = dd.split(';')
             let filteredArray = ddArray.filter(domain => domain.trim().startsWith(action) && (domain.includes(dict.CAUSES) || domain.includes(dict.RELEASES)))
             console.log(filteredArray)
             filteredArray.forEach(item => {
                 console.log("EACH ITEM", item)
-                posibilites.push(calculatePosibilities(item))
+                posibilites.push(calculatePosibilities(item, currentObservation))
             })
 
             return posibilites
         }
-
-        function calculatePosibilities(domain) {
+        function calculatePosibilities(domain, currentObservation) {
             domain = domain.trim();
             let observation;
             if (domain.includes(dict.CAUSES)) {
@@ -251,9 +312,7 @@ class MainFragment extends React.Component {
 
                 if (domain.includes(dict.IF)) {
 
-                    let parsedCondition = parsedDomain[1].split(dict.IF)
-                    observation = parsedCondition[0].trim()
-                    let condition = parsedCondition[1].trim()
+                    observation = checkIfConditionTrue(parsedDomain, currentObservation)
 
                 } else {
                     observation = parsedDomain[1].trim()
@@ -422,8 +481,7 @@ class MainFragment extends React.Component {
                 <div>
                     <label>Domain Description</label>
                     <textarea ref="domainDescription" className="domain-description-input__main" onChange={::this._handleInput} defaultValue="LOAD causes loaded;
-SHOOT causes ¬loaded;
-SHOOT causes ¬alive if loaded ∧ ¬hidden;
+SHOOT causes loaded if ¬hidden ⋀ alive;
 LOAD invokes ESCAPE if loaded;
 ESCAPE releases hidden." rows={8}/>
                 </div>
@@ -431,7 +489,7 @@ ESCAPE releases hidden." rows={8}/>
                     <label>Scenario (OBS)</label>
                     <input ref="obs" className="scenario-input__main"  onChange={::this._handleInput} defaultValue="{(alive ∧ ¬loaded ∧ ¬hidden, 0)}"/>
                     <label>Scenario (ACS)</label>
-                    <input ref="acs" className="scenario-input__main" defaultValue="{(LOAD,1), (SHOOT,3)}"/>
+                    <input ref="acs" className="scenario-input__main" defaultValue="{(SHOOT,1)}"/>
                 </div>
               </div>
                 <button onClick={::this._handleDraw}>Draw</button>
