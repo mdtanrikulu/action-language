@@ -179,11 +179,20 @@ class MainFragment extends React.Component {
                     return consequence
 
             } else {
-                let result = consequence.startsWith("¬") ? consequence.replace("¬", "") : "¬" + consequence
+                let result;
                 currentObservation.forEach(observation => {
-                    if (observation.sign == cnsSign && observation.value == condition) {
+                    let cnsSign = 1
+                    let tmpCondition = condition;
+                    if (condition.startsWith('¬')) {
+                        cnsSign = 0
+                        tmpCondition = condition.replace("¬", "")
+                    }
+
+                    if (observation.sign == cnsSign && observation.value == tmpCondition) {
                         result = consequence
-                        tempObs = observation.sign == 0 ? "¬" + observation.value : observation.value
+                    }
+                    if (consequence.includes(observation.value)) {
+                        result = observation.sign == 0 ? "¬" + observation.value : observation.value
                     }
                 })
                 return result
@@ -327,9 +336,7 @@ class MainFragment extends React.Component {
 
                 if (domain.includes(dict.IF)) {
                     //TODO
-                    let parsedCondition = parsedDomain[1].split(dict.IF)
-                    observation = parsedCondition[0].trim()
-                    let condition = parsedCondition[1].trim()
+                    observation = checkIfConditionTrue(parsedDomain, currentObservation)
 
                 } else {
                     observation = parsedDomain[1].trim()
