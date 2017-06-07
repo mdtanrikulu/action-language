@@ -118,15 +118,33 @@ class MainFragment extends React.Component {
             let parsedCondition = parsedDomain[1].split(dict.IF)
             let consequence = parsedCondition[0].trim()
             let condition = parsedCondition[1].trim()
+            if (condition.includes("⋀") || condition.includes("⋁")) {
+                var domain = condition;
+                let reg = new RegExp(/(¬?)\w+/g)
+                let sonuc = domain.match(reg)
+                domain = domain.replace("⋀", "&&");
+                domain = domain.replace('⋁', '||');
+                currentObservation.forEach(observation => {
+                    sonuc.forEach(item => {
+                        let cnsSign = 1
 
-            let cnsSign = 1
+                        if (item.startsWith('¬')) {
+                            cnsSign = 0
+                            item = item.replace("¬", "")
+                        }
+                        if (observation.sign == cnsSign && observation.value == item) {
+                            domain = domain.replace(item, 'true')
+                        }
+                    })
 
-            if (condition.startsWith('¬')) {
-                cnsSign = 0
-                condition = condition.replace("¬", "")
-            }
-
-            if (condition.includes("∧") || condition.includes("⋁")) {
+                })
+                domain = domain.replace("¬", "")
+                domain = domain.replace("hidden", "false")
+                domain = domain.replace("alive", "false")
+                domain = domain.replace("loaded", "false")
+                domain = domain.replace("¬", "")
+                if (eval(domain))
+                    return consequence
             } else {
                 let result = consequence.startsWith("¬") ? consequence.replace("¬", "") : "¬" + consequence
                 currentObservation.forEach(observation => {
@@ -403,7 +421,7 @@ class MainFragment extends React.Component {
                 <div>
                     <label>Domain Description</label>
                     <textarea ref="domainDescription" className="domain-description-input__main" onChange={::this._handleInput} defaultValue="LOAD causes loaded;
-SHOOT causes ¬loaded if ¬hidden;
+SHOOT causes loaded if ¬hidden ⋀ alive;
 LOAD invokes ESCAPE if loaded;
 ESCAPE releases hidden." rows={8}/>
                 </div>
@@ -411,7 +429,7 @@ ESCAPE releases hidden." rows={8}/>
                     <label>Scenario (OBS)</label>
                     <input ref="obs" className="scenario-input__main"  onChange={::this._handleInput} defaultValue="{(alive ∧ ¬loaded ∧ ¬hidden, 0)}"/>
                     <label>Scenario (ACS)</label>
-                    <input ref="acs" className="scenario-input__main" defaultValue="{(LOAD,1), (SHOOT,3)}"/>
+                    <input ref="acs" className="scenario-input__main" defaultValue="{(SHOOT,1)}"/>
                 </div>
               </div>
                 <button onClick={::this._handleDraw}>Draw</button>
