@@ -419,7 +419,7 @@ class MainFragment extends React.Component {
             let regExp = /\(([^()]+)\)/g;
             let matches;
             while (matches = regExp.exec(val)) {
-                let valuesArr = matches[1].split(',')[0].split('∧')
+                let valuesArr = matches[1].split(',')[0].split('⋀')
                 valuesArr.forEach((item, index) => {
                     item = item.trim()
                     if (item.includes('¬')) {
@@ -502,7 +502,7 @@ ESCAPE releases hidden." rows={8}/>
                 </div>
                 <div>
                     <label>Scenario (OBS)</label>
-                    <input ref="obs" className="scenario-input__main"  onChange={::this._handleInput} defaultValue="{(alive ∧ ¬loaded ∧ ¬hidden, 0)}"/>
+                    <input ref="obs" className="scenario-input__main"  onChange={::this._handleInput} defaultValue="{(alive ⋀ ¬loaded ⋀ ¬hidden, 0)}"/>
                     <label>Scenario (ACS)</label>
                     <input ref="acs" className="scenario-input__main" defaultValue="{(LOAD,1),(SHOOT,3)}"/>
                 </div>
