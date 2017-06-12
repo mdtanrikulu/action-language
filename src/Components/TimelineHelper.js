@@ -1,5 +1,6 @@
 import { store } from './../main.js'
 import { isNull, logicSplitter } from './utils/HelperFuncs.js'
+import conditionCheck from './ConditionChecker.js'
 
 class Timeline {
     constructor() {
@@ -42,6 +43,8 @@ function timelineHelper(observationList, actionList) {
     console.log("observationList", observationList);
     let endOfTimeline = false;
     let timeline = new Timeline()
+
+    console.log(conditionCheck('alive ⋁ ¬hidden ⋀ loaded'))
 
     while (!endOfTimeline) {
         let moment = new Moment()

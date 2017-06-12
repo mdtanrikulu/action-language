@@ -16,7 +16,7 @@ class Observation {
  * @param  {String} val [value of the OBS input]
  * @return {Array}     [Array of OBS values]
  */
-function parseOBS(val, observationHistory) {
+function parseOBS(val) {
     let result = [];
     let regExp = /\(([^()]+)\)/g;
     let matches;

@@ -22,12 +22,17 @@ export function isNull(list, index) {
     return list[index] === null || list[index] === undefined
 }
 
-export function caseCalculator(query) {
+export function createLogicStatement(query) {
     query = replaceAll(query, '⋀', '&')
     query = replaceAll(query, '⋁', '||')
     query = replaceAll(query, '¬', '~')
     query = charCase(query)
-    let statement = new Statement(query);
+    return new Statement(query);
+}
+
+export function caseCalculator(query) {
+
+    let statement = createLogicStatement(query)
 
     var truth = statement.table();
     const {variables, rows} = truth
