@@ -7,7 +7,7 @@ import App from './Container/App'
 import reducer from './Reducers/index.js'
 import './scss/main.scss'
 
-let store = createStore(reducer, window.__REDUX_DEVTOOLS_EXTENSION__ && window.__REDUX_DEVTOOLS_EXTENSION__());
+export let store = createStore(reducer, window.__REDUX_DEVTOOLS_EXTENSION__ && window.__REDUX_DEVTOOLS_EXTENSION__());
 
 document.addEventListener('DOMContentLoaded', function() {
     render(

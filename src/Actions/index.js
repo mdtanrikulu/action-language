@@ -10,3 +10,24 @@ export const setTimeline = (payload) => {
         payload
     }
 }
+
+export const setBranch = (payload) => {
+    return {
+        type: 'BRANCH',
+        payload
+    }
+}
+
+export const setError = (payload) => {
+    return {
+        type: 'ERROR',
+        payload
+    }
+}
+
+export const setObservationHistory = (payload) => {
+    return {
+        type: 'OBSERVATION_HISTORY',
+        payload
+    }
+}
