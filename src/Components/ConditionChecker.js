@@ -1,18 +1,32 @@
 import { store } from './../main.js'
-import { createLogicStatement } from './utils/HelperFuncs.js'
+import { createLogicStatement, queryToObject } from './utils/HelperFuncs.js'
 
-function conditionCheck(query) {
-    let result = []
-    let statement = createLogicStatement(query) // domain
-    let observationHistory = store.getState().timeline.observationHistory //senaryo
-    console.log("BOKLOG1", observationHistory)
-    console.log("BOKLOG1", statement)
-    //TODO
-    result.push(statement.evaluate({
-        'a': !!0,
-        'h': !!0,
-        'l': !!0
-    }))
-    return result
+function checkIfMatch(observationList, query) {
+
+    return observationList.some((observation) => {
+        return observation.value == query.value && observation.sign == query.sign
+    })
+
 }
-export default conditionCheck
+
+function conditionCheck(query, observationList) {
+
+    let statement = createLogicStatement(query) // domain
+    let queryObjects = queryToObject(query)
+
+        let queryStatus = queryObjects.map(query => {
+            return {
+                [query.value.charAt(0)]: checkIfMatch(observationList, query) ? !!query.sign : !query.sign
+            }
+        })
+
+        console.log("queryStatus", queryStatus);
+        let merged = Object.assign(...queryStatus);
+        console.log("merged", merged);
+
+        
+
+    return statement.evaluate(merged)
+}
+
+export {conditionCheck as default}

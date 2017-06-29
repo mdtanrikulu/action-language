@@ -11,14 +11,16 @@ class TimeLine extends React.Component {
     }
 
     createLine(data, error) {
-        return data.map((item, index) => <div className="item__timeline" key={index.toString()}>
+        console.log("data", data.timePoints);
+        return data.timePoints.map((item, index) => <div className="item__timeline" key={index.toString()}>
             <div className="indicator__timeline">
                 <span>{index}</span>
-                { item.action && <div className="highliht__timeline"><span>{item.action}</span></div>}
+                { item.action && <div className="highliht__timeline"><span>{item.action.name}</span></div>}
             </div>
             <div className="line__timeline"/>
             <div className="label-container__timeline">
-            {item.val.map(({value, sign}, index) => <span key={index.toString()}> {sign ? '' : '¬'}{value.charAt(0)}</span>)}
+            {item.observation.map(({value, sign}, index) => <span key={index.toString()}> {sign ? '' : '¬'}{value.charAt(0)}</span>)}
+            {item.observation.length == 0 && <span>?*</span>}
             </div>
         </div>)
     }

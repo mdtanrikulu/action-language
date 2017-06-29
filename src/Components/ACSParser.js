@@ -1,9 +1,5 @@
 import { store } from './../main.js'
-class Action {
-    constructor(name) {
-        this.name = name
-    }
-}
+import Action from './objects/Action.js'
 /**
  * [parseACS function]
  * @param  {String} val [value of the ACS input]
